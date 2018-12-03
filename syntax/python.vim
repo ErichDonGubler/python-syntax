@@ -61,9 +61,11 @@ endif
 " Keywords
 "
 
-syn keyword pythonStatement     break continue del return pass yield global assert lambda with
-syn keyword pythonStatement     raise nextgroup=pythonExClass skipwhite
-syn keyword pythonStatement     def class nextgroup=pythonFunction skipwhite
+syn keyword pythonKeyword       break continue del return pass yield global assert lambda with
+syn keyword pythonRaise         raise nextgroup=pythonExceptionClass,pythonIdent skipwhite
+syn cluster pythonStatement     contains=pythonKeyword,pythonRaise
+syn keyword pythonClassDef      class nextgroup=pythonClassName skipwhite
+syn keyword pythonFuncDef       def nextgroup=pythonFuncName skipwhite
 if s:Enabled('g:python_highlight_class_vars')
   syn keyword pythonClassVar    self cls
 endif
@@ -84,17 +86,32 @@ if s:Python2Syntax()
   endif
   syn keyword pythonStatement   exec
   syn keyword pythonImport      as
-  syn match   pythonFunction    '[a-zA-Z_][a-zA-Z0-9_]*' display contained
+  syn match pythonIdent         '[a-zA-Z_][a-zA-Z0-9_]*' display contained
+  syn match pythonFuncArg         '[a-zA-Z_][a-zA-Z0-9_]*' display contained
+  syn match pythonFuncName      nextgroup=pythonFuncParamList '[a-zA-Z_][a-zA-Z0-9_]*' display contained
+  syn region pythonFuncParamList matchgroup=pythonParen start="(" end=")" contained contains=pythonFuncParam transparent keepend
+  syn match pythonFuncParam "[^,]*" contained contains=pythonBuiltinObj,pythonFuncArg skipwhite
+  syn match pythonClassArg         '[a-zA-Z_][a-zA-Z0-9_]*' display contained
+  syn match pythonClassName     '[a-zA-Z_][a-zA-Z0-9_]*' nextgroup=pythonClassParamList display contained
+  syn region pythonClassParamList matchgroup=pythonParen start="(" end=")" contained contains=pythonClassParam transparent keepend
+  syn match pythonClassParam "[^,]*" contained contains=pythonBuiltinObj,pythonClassArg skipwhite
 else
   syn keyword pythonStatement   as nonlocal
   syn match   pythonStatement   '\v\.@<!<await>'
-  syn match   pythonFunction    '\%([^[:cntrl:][:space:][:punct:][:digit:]]\|_\)\%([^[:cntrl:][:punct:][:space:]]\|_\)*' display contained
-  syn match   pythonStatement   '\<async\s\+def\>' nextgroup=pythonFunction skipwhite
+  syn match   pythonIdent       '\%([^[:cntrl:][:space:][:punct:][:digit:]]\|_\)\%([^[:cntrl:][:punct:][:space:]]\|_\)*' display contained
+  syn match pythonFuncArg         '[a-zA-Z_][a-zA-Z0-9_]*' display contained
+  syn match pythonFuncName      nextgroup=pythonFuncParamList '[a-zA-Z_][a-zA-Z0-9_]*' display contained
+  syn region pythonFuncParamList matchgroup=pythonParen start="(" end=")" contained contains=pythonFuncParam transparent keepend
+  syn match pythonFuncParam "[^,]*" contained contains=pythonBuiltinObj,pythonFuncArg skipwhite
+  syn match pythonClassArg         '[a-zA-Z_][a-zA-Z0-9_]*' display contained
+  syn match pythonClassName     '[a-zA-Z_][a-zA-Z0-9_]*' nextgroup=pythonClassParamList display contained
+  syn region pythonClassParamList matchgroup=pythonParen start="(" end=")" contained contains=pythonClassParam transparent keepend
+  syn match pythonClassParam "[^,]*" contained contains=pythonBuiltinObj,pythonClassArg skipwhite
+  syn match   pythonStatement   '\<async\s\+def\>' nextgroup=pythonFuncName skipwhite
   syn match   pythonStatement   '\<async\s\+with\>'
   syn match   pythonStatement   '\<async\s\+for\>'
-  syn cluster pythonExpression contains=pythonStatement,pythonRepeat,pythonConditional,pythonOperator,pythonNumber,pythonHexNumber,pythonOctNumber,pythonBinNumber,pythonFloat,pythonString,pythonBytes,pythonBoolean,pythonBuiltinObj,pythonBuiltinFunc
 endif
-
+syn cluster pythonExpression  contains=pythonStatement,pythonRepeat,pythonConditional,pythonOperator,pythonNumber,pythonHexNumber,pythonOctNumber,pythonBinNumber,pythonFloat,pythonString,pythonBytes,pythonBoolean,pythonBuiltinObj,pythonBuiltinFunc,pythonIdent
 
 "
 " Operators
@@ -381,7 +398,7 @@ if s:Enabled('g:python_highlight_exceptions')
       let s:exs_re .= '|BlockingIOError|ChildProcessError|ConnectionError|BrokenPipeError|ConnectionAbortedError|ConnectionRefusedError|ConnectionResetError|FileExistsError|FileNotFoundError|InterruptedError|IsADirectoryError|NotADirectoryError|PermissionError|ProcessLookupError|TimeoutError|StopAsyncIteration|ResourceWarning'
   endif
 
-  execute 'syn match pythonExClass ''\v\.@<!\zs<%(' . s:exs_re . ')>'''
+  execute 'syn match pythonExceptionClass ''\v\.@<!\zs<%(' . s:exs_re . ')>'''
   unlet s:exs_re
 endif
 
@@ -406,7 +423,7 @@ if v:version >= 508 || !exists('did_python_syn_inits')
   HiLink pythonStatement        Statement
   HiLink pythonRaiseFromStatement   Statement
   HiLink pythonImport           Include
-  HiLink pythonFunction         Function
+  HiLink pythonFuncName         Function
   HiLink pythonConditional      Conditional
   HiLink pythonRepeat           Repeat
   HiLink pythonException        Exception
@@ -474,7 +491,7 @@ if v:version >= 508 || !exists('did_python_syn_inits')
   HiLink pythonBuiltinObj       Structure
   HiLink pythonBuiltinFunc      Function
 
-  HiLink pythonExClass          Structure
+  HiLink pythonExceptionClass   Structure
   HiLink pythonClassVar         Identifier
 
   delcommand HiLink
